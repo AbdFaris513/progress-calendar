@@ -20,7 +20,13 @@
     --accentG:    rgba(240,136,62,.18);
     --green:      #39d353;
     --red:        #f85149;
-    --s0:#1e2730; --s1:#0e3320; --s2:#006d32; --s3:#26a641; --s4:#39d353; --s5:#f0883e;
+    /* BRIGHT heatmap colors - clearly visible on dark bg */
+    --s0:#1e2730;
+    --s1:#255c35;
+    --s2:#1f8c3b;
+    --s3:#26b84e;
+    --s4:#39d353;
+    --s5:#f0883e;
     --cell:13px; --gap:3px;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -124,7 +130,6 @@
   .year-select option{background:var(--card);}
   .dropdown-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--t2);font-size:11px;}
 
-  /* Filter dropdown */
   .filter-wrap{position:relative;}
   .filter-select{
     appearance:none;background:var(--card);border:1px solid var(--borderL);
@@ -143,12 +148,11 @@
   .sc-val{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1.1;margin:2px 0;}
   .sc-sub{font-size:11px;color:var(--t2);}
 
-  .cal-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;}
+  .cal-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;overflow:visible;}
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .cal-title{font-size:14px;font-weight:700;}
   .cal-sub{font-size:12px;color:var(--t2);}
 
-  /* filter badge */
   .filter-badge{
     display:inline-flex;align-items:center;gap:5px;
     padding:3px 10px;border-radius:20px;
@@ -159,7 +163,7 @@
   .filter-badge-x{cursor:pointer;font-size:12px;color:var(--green);margin-left:2px;}
   .filter-badge-x:hover{color:var(--red);}
 
-  .heatmap-outer{display:flex;gap:0;overflow-x:auto;padding-bottom:10px;}
+  .heatmap-outer{display:flex;gap:0;overflow-x:auto;overflow-y:visible;padding-top:16px;padding-bottom:10px;}
   .heatmap-outer::-webkit-scrollbar{height:8px;}
   .heatmap-outer::-webkit-scrollbar-track{background:var(--hover);border-radius:4px;}
   .heatmap-outer::-webkit-scrollbar-thumb{background:var(--borderL);border-radius:4px;}
@@ -175,17 +179,46 @@
   .cell.clickable{cursor:pointer;transition:transform .12s;}
   .cell.clickable:hover{transform:scale(1.55);z-index:10;position:relative;outline:1.5px solid rgba(255,255,255,.3)!important;}
   .cell.spacer{pointer-events:none;opacity:0;}
-  .cell.locked{opacity:.25;cursor:default;}
-  /* filter dim */
+  .cell.locked{opacity:1;cursor:default;}
+  .cell.locked.s0{opacity:.3;}
   .cell.filter-dim{opacity:.12 !important;transform:none !important;}
   .cell.filter-hit{outline:2px solid var(--green) !important;outline-offset:-1px;z-index:5;position:relative;}
+
+  /* Flat cell colors — no glow on regular cells */
   .s0{background:var(--s0);outline:1px solid #2d3a47;outline-offset:-1px;}
   .s1{background:var(--s1);}
   .s2{background:var(--s2);}
   .s3{background:var(--s3);}
   .s4{background:var(--s4);}
-  .s5{background:var(--s5);box-shadow:0 0 5px rgba(240,136,62,.5);}
+  .s5{background:var(--s5);}
+  /* TODAY — border only when NOT yet rated */
   .today-cell{outline:2px solid var(--accent)!important;outline-offset:-2px;z-index:5;position:relative;}
+
+  /* 21-day milestone — NO border, subtle glow + emoji inside */
+  .milestone-21{
+    position:relative;
+    outline:none !important;
+    z-index:6;
+    box-shadow:0 0 6px 1px rgba(240,136,62,.55);
+    overflow:visible !important;
+  }
+  /* 🔥 emoji centered inside the milestone cell */
+  .milestone-emoji{
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+    pointer-events:none;
+    z-index:50;
+    line-height:1;
+  }
+  /* Make parent containers not clip overflow */
+  .week-col{ overflow:visible; }
+  .month-weeks{ overflow:visible; }
+  .month-block{ overflow:visible; }
+  .heatmap-outer{ overflow-x:auto; overflow-y:visible; padding-top:16px; }
 
   /* ── GOALS TAB ── */
   .goals-page{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px;}
@@ -307,12 +340,6 @@
   .default-task-item:hover{border-color:var(--borderL);}
   .default-task-icon{font-size:16px;flex-shrink:0;width:24px;text-align:center;}
   .default-task-name{flex:1;font-size:13px;font-weight:600;color:var(--t1);}
-  .default-task-name-input{
-    flex:1;background:transparent;border:none;outline:none;
-    font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;
-    color:var(--t1);padding:0;
-  }
-  .default-task-name-input::placeholder{color:var(--t3);}
   .default-task-badge{
     font-size:10px;padding:2px 8px;border-radius:10px;
     background:rgba(57,211,83,.12);color:var(--green);
@@ -351,7 +378,7 @@
     font-size:13px;border:1px dashed var(--border);border-radius:8px;
   }
 
-  /* ── MODAL (day rating) ── */
+  /* ── MODAL ── */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;}
   .overlay.open{display:flex;}
   .modal{
@@ -379,7 +406,6 @@
   .star-btn:hover{transform:scale(1.3);filter:none;}
   .star-btn.lit{filter:none;}
 
-  /* day tasks inside modal */
   .m-tasks-section{margin-bottom:16px;}
   .m-tasks-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
   .m-default-badge{
@@ -410,7 +436,6 @@
   .btn-clear{background:transparent;color:var(--red);border-color:var(--red);}
   .btn-clear:hover{background:rgba(248,81,73,.1);}
 
-  /* task default indicator */
   .task-default-tag{
     font-size:9px;padding:1px 5px;border-radius:6px;
     background:rgba(57,211,83,.1);color:var(--green);
@@ -461,83 +486,43 @@
   }
   .tooltip.show{opacity:1;}
 
-  /* ── GLOBAL SCROLLBAR STYLE ─────────────────────────────────── */
   ::-webkit-scrollbar{width:6px;height:6px;}
   ::-webkit-scrollbar-track{background:var(--hover);border-radius:4px;}
   ::-webkit-scrollbar-thumb{background:var(--borderL);border-radius:4px;}
   ::-webkit-scrollbar-thumb:hover{background:#5a6270;}
   * { scrollbar-width:thin; scrollbar-color:var(--borderL) var(--hover); }
 
-  /* ── SIDEBAR SCROLLABLE ─────────────────────────────────────── */
   .sidebar{
     overflow-y:auto;
     max-height:calc(100vh - 80px);
     position:sticky;top:80px;
     align-self:flex-start;
   }
-
-  /* ── MAIN AREA SCROLLABLE ───────────────────────────────────── */
   .main{ overflow-y:auto; max-height:calc(100vh - 80px); }
-
-  /* ── GOALS PAGE SCROLLABLE ──────────────────────────────────── */
   .goals-page{ overflow-y:auto; max-height:calc(100vh - 80px); width:100%; }
-
-  /* ── DEFAULTS PAGE SCROLLABLE ───────────────────────────────── */
   .defaults-page{ overflow-y:auto; max-height:calc(100vh - 80px); width:100%; }
-
-  /* ── TAB CONTENT FULL HEIGHT ────────────────────────────────── */
   .tab-content.active{ height:calc(100vh - 80px); overflow:hidden; }
 
-  /* ── HEATMAP SCROLLBAR (already styled, enhance) ────────────── */
   .heatmap-outer::-webkit-scrollbar{height:8px;}
   .heatmap-outer::-webkit-scrollbar-track{background:var(--bg);border-radius:4px;margin:0 4px;}
   .heatmap-outer::-webkit-scrollbar-thumb{background:#3d4a5c;border-radius:4px;}
   .heatmap-outer::-webkit-scrollbar-thumb:hover{background:#5a6270;}
 
-  /* ── MODAL TASK LIST SCROLLBAR ──────────────────────────────── */
-  .m-task-list::-webkit-scrollbar{width:4px;}
-  .m-task-list::-webkit-scrollbar-track{background:var(--hover);}
-  .m-task-list::-webkit-scrollbar-thumb{background:var(--borderL);border-radius:2px;}
-
-  /* ══════════════════════════════════════════
-     RESPONSIVE — MOBILE (≤768px)
-  ══════════════════════════════════════════ */
+  /* ══ RESPONSIVE ══ */
   @media (max-width:768px){
-
-    /* Titlebar */
     .dot{display:none;}
     .win-title{font-size:11px;}
     .sync-status{padding:3px 8px;font-size:10px;margin-left:auto;}
     .sync-txt{display:none;}
-
-    /* Tabs */
     .tabs{overflow-x:auto;white-space:nowrap;}
     .tabs::-webkit-scrollbar{display:none;}
     .tab{padding:10px 14px;font-size:12px;flex-shrink:0;}
-
-    /* App body: stack vertically */
     .app-body{flex-direction:column;}
     .sidebar{display:none;}
-
-    /* Tab content: full viewport scroll */
-    .tab-content.active{
-      height:auto;
-      overflow:visible;
-      flex-direction:column;
-    }
-
-    /* Main: normal scroll */
-    .main{
-      padding:12px;gap:12px;
-      overflow-y:visible;
-      max-height:none;
-    }
-
-    /* Goals / Defaults pages */
+    .tab-content.active{height:auto;overflow:visible;flex-direction:column;}
+    .main{padding:12px;gap:12px;overflow-y:visible;max-height:none;}
     .goals-page{padding:12px;overflow-y:visible;max-height:none;}
     .defaults-page{padding:12px;overflow-y:visible;max-height:none;}
-
-    /* Mobile profile card */
     .mobile-profile{
       display:flex !important;
       align-items:center;gap:12px;
@@ -554,51 +539,32 @@
     .mobile-profile-info{flex:1;min-width:0;}
     .mobile-p-name{font-size:14px;font-weight:700;}
     .mobile-p-handle{font-size:11px;color:var(--t2);}
-    .mobile-p-streak{
-      font-size:12px;font-weight:700;color:var(--accent);
-      font-family:'JetBrains Mono',monospace;margin-top:2px;
-    }
-
-    /* Stats: 2×2 grid */
+    .mobile-p-streak{font-size:12px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:2px;}
     .stats-strip{grid-template-columns:repeat(2,1fr);gap:8px;}
     .sc-val{font-size:20px;}
     .sc-lbl{font-size:9px;}
-
-    /* Header row */
     .header-row{flex-direction:column;align-items:flex-start;gap:8px;}
     .header-controls{width:100%;display:flex;justify-content:space-between;gap:6px;}
     .filter-select{flex:1;max-width:none;font-size:12px;padding:6px 24px 6px 10px;}
     .year-select{font-size:12px;padding:6px 24px 6px 10px;}
     .page-title{font-size:17px;}
-
-    /* Filter bar */
     #filterBar{flex-wrap:wrap;gap:6px;font-size:11px;}
-
-    /* Cal card */
     .cal-card{padding:12px 10px;}
     .cal-header{flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:10px;}
     .cal-title{font-size:13px;}
     .cal-sub{font-size:11px;}
-
-    /* Heatmap cells smaller */
     :root{--cell:11px;--gap:2px;}
     .dow-col{margin-right:4px;}
     .dow-lbl{width:20px;font-size:9px;}
     .month-name{font-size:9px;}
     .month-block{margin-right:6px;}
-
-    /* Goals grid: 1 col */
     .month-goals-grid{grid-template-columns:1fr;}
     .goals-header{flex-direction:column;align-items:flex-start;gap:8px;}
     .goal-card{padding:14px;}
-
-    /* Defaults page */
     .add-default-row{flex-wrap:wrap;gap:6px;}
     .add-default-icon-input{width:48px;}
     .add-default-name-input{width:100%;flex:none;}
     .add-default-btn{width:100%;text-align:center;}
-
-    /* Badges */
     .badges-card{padding:14px;}
     .badges-header{flex-direction:column;align-items:flex-start;gap:4px;}
     .badges-sub{font-size:11px;}
@@ -606,8 +572,6 @@
     .badges-divider{width:100%;height:1px;margin:4px 0;}
     .badges-group{padding:4px 2px;}
     .badges-group-items{gap:14px;}
-
-    /* Modal: slide up from bottom */
     .overlay{align-items:flex-end;}
     .modal{
       width:100%;max-width:100%;
@@ -617,11 +581,7 @@
       animation:slideUp .25s ease;
       max-height:88vh;
     }
-    @keyframes slideUp{
-      from{transform:translateY(100%);opacity:0}
-      to{transform:translateY(0);opacity:1}
-    }
-    /* drag handle on modal */
+    @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
     .modal::before{
       content:'';display:block;
       width:40px;height:4px;border-radius:2px;
@@ -635,7 +595,6 @@
     .btn{padding:11px;font-size:13px;}
   }
 
-  /* ── VERY SMALL PHONES (≤400px) ─────────────────────────────── */
   @media (max-width:400px){
     :root{--cell:10px;--gap:2px;}
     .tab{padding:9px 10px;font-size:11px;}
@@ -646,7 +605,6 @@
     .filter-select,.year-select{width:100%;max-width:none;}
   }
 
-  /* ── TABLET (769–1024px) ────────────────────────────────────── */
   @media (min-width:769px) and (max-width:1024px){
     .mobile-profile{display:none !important;}
     .mobile-stats{display:none !important;}
@@ -657,7 +615,6 @@
     :root{--cell:12px;--gap:3px;}
   }
 
-  /* ── DESKTOP (≥1025px) ──────────────────────────────────────── */
   @media (min-width:1025px){
     .mobile-profile{display:none !important;}
     .mobile-stats{display:none !important;}
@@ -672,11 +629,10 @@
     <span class="win-title">Progress Calendar</span>
     <div id="sync-status" class="sync-status sync-idle" title="GitHub Gist Sync">
       <span class="sync-dot"></span>
-      <span class="sync-txt">Connecting…</span>
+      <span class="sync-txt">Connecting...</span>
     </div>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('calendar')">📊 Heatmap</div>
     <div class="tab" onclick="switchTab('goals')">🎯 Goals & Tasks</div>
@@ -696,8 +652,9 @@
         </div>
         <hr class="divider"/>
         <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="sb-row"><span class="sb-lbl">🔥 Current Streak</span><span class="sb-val" id="sb-streak">0</span></div>
           <div class="sb-row"><span class="sb-lbl">📅 Total Days</span><span class="sb-val" id="sb-total">0</span></div>
-          <div class="sb-row"><span class="sb-lbl">🔥 Max Streak</span><span class="sb-val" id="sb-streak">0</span></div>
+          <div class="sb-row"><span class="sb-lbl">⚡ Max Streak</span><span class="sb-val" id="sb-maxstreak">0</span></div>
           <div class="sb-row"><span class="sb-lbl">⭐ Avg Rating</span><span class="sb-val" id="sb-avg">—</span></div>
           <div class="sb-row"><span class="sb-lbl">🌟 Perfect Days</span><span class="sb-val" id="sb-five">0</span></div>
         </div>
@@ -714,13 +671,12 @@
         <hr class="divider"/>
         <div style="font-size:11px;color:var(--t3);line-height:1.6;">
           🔒 Only <strong style="color:var(--t2)">today</strong> & <strong style="color:var(--t2)">yesterday</strong> are editable.<br/>
-          🔥 Streak counts with <strong style="color:var(--t2)">3+ stars</strong> only.
+          🔥 Streak counts with <strong style="color:var(--t2)">3+ stars</strong> only.<br/>
+          🔥 Every <strong style="color:var(--accent)">21 days</strong> milestone shown on heatmap.
         </div>
       </aside>
 
       <main class="main">
-
-        <!-- MOBILE ONLY: profile + quick stats bar -->
         <div class="mobile-profile" style="display:none;">
           <div class="mobile-avatar">A</div>
           <div class="mobile-profile-info">
@@ -733,14 +689,12 @@
         <div class="header-row">
           <div class="page-title">📊 Progress Heatmap</div>
           <div class="header-controls">
-            <!-- Filter by default task -->
             <div class="filter-wrap">
               <select class="filter-select" id="taskFilterSelect" onchange="applyFilter()">
-                <option value="">🔍 Filter by task…</option>
+                <option value="">🔍 Filter by task...</option>
               </select>
               <span class="dropdown-arrow">▾</span>
             </div>
-            <!-- Year   -->
             <div class="year-dropdown-wrap">
               <select class="year-select" id="yearSelect" onchange="switchYear(+this.value)">
                 <option value="2023">2023</option>
@@ -753,24 +707,24 @@
           </div>
         </div>
 
-        <!-- Filter info bar -->
-        <div id="filterBar" style="display:none;font-size:12px;color:var(--t2);display:none;align-items:center;gap:8px;">
+        <div id="filterBar" style="display:none;font-size:12px;color:var(--t2);align-items:center;gap:8px;">
           <span>Showing days where</span>
           <span id="filterBarBadge" class="filter-badge"></span>
           <span>was completed</span>
           <span style="color:var(--t3);cursor:pointer;margin-left:4px;" onclick="clearFilter()">✕ Clear filter</span>
         </div>
 
+        <!-- STATS: Streak FIRST, then Active Days -->
         <div class="stats-strip">
-          <div class="stat-card">
-            <div class="sc-icon">📅</div><div class="sc-lbl">Active Days</div>
-            <div class="sc-val" style="color:var(--s4)" id="sc-active">0</div>
-            <div class="sc-sub">days logged</div>
-          </div>
           <div class="stat-card">
             <div class="sc-icon">🔥</div><div class="sc-lbl">Current Streak</div>
             <div class="sc-val" style="color:var(--red)" id="sc-streak">0</div>
             <div class="sc-sub">consecutive days</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-icon">📅</div><div class="sc-lbl">Active Days</div>
+            <div class="sc-val" style="color:var(--s4)" id="sc-active">0</div>
+            <div class="sc-sub">days logged</div>
           </div>
           <div class="stat-card">
             <div class="sc-icon">📆</div><div class="sc-lbl">Best Month</div>
@@ -783,6 +737,7 @@
             <div class="sc-sub">5-star days</div>
           </div>
         </div>
+
         <div class="cal-card">
           <div class="cal-header">
             <span class="cal-title" id="cal-title">2026 Activity</span>
@@ -831,24 +786,20 @@
           You can also filter the heatmap to see which days you completed each task.
         </div>
       </div>
-
       <div class="defaults-card">
         <div>
           <div class="defaults-card-title">📋 Your Default Tasks <span id="defaults-count-badge" class="filter-badge" style="font-size:11px;">0 tasks</span></div>
           <div class="defaults-card-sub">These are pre-filled every time you open the day rating modal.</div>
         </div>
-
         <div class="default-task-list" id="defaultTaskList">
           <div class="defaults-empty" id="defaults-empty">No default tasks yet. Add one below to get started! ⬇️</div>
         </div>
-
         <div class="add-default-row">
           <input class="add-default-icon-input" id="newDefaultIcon" placeholder="🏃" maxlength="4"/>
-          <input class="add-default-name-input" id="newDefaultName" placeholder="Task name (e.g. No Masturbation, Exercise, Reading…)"
+          <input class="add-default-name-input" id="newDefaultName" placeholder="Task name (e.g. No Masturbation, Exercise, Reading...)"
             onkeydown="if(event.key==='Enter')addDefaultTask()"/>
           <button class="add-default-btn" onclick="addDefaultTask()">+ Add Task</button>
         </div>
-
         <div style="font-size:12px;color:var(--t3);padding:8px 12px;background:var(--hover);border-radius:8px;border:1px solid var(--border);">
           💡 <strong style="color:var(--t2)">Tip:</strong> Add daily habits you want to track consistently — like "No Masturbation", "Exercise", "Read 30min", "No Sugar". They'll show up checked-off every day for you to track.
         </div>
@@ -857,7 +808,6 @@
   </div>
 </div>
 
-<!-- Tooltip -->
 <div class="tooltip" id="tooltip"></div>
 
 <!-- Day Rating Modal -->
@@ -881,7 +831,7 @@
       </div>
       <div class="m-task-list" id="m-task-list"></div>
       <div class="m-add-row">
-        <input class="m-add-input" id="m-task-input" placeholder="Add a task…" onkeydown="if(event.key==='Enter')addModalTask()"/>
+        <input class="m-add-input" id="m-task-input" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addModalTask()"/>
         <button class="m-add-btn" onclick="addModalTask()">+</button>
       </div>
     </div>
@@ -896,8 +846,7 @@
 </div>
 
 <script>
-/* ─── STORAGE ─────────────────────────────────────────────────── */
-/* ─── GITHUB GIST SYNC ────────────────────────────────────────── */
+/* ─── GITHUB GIST SYNC ──────────────────────────────────────────── */
 const GIST_ID    = 'cbdd844304c2d3bcfbd3f70a039e15bf';
 const GIST_TOKEN = window.GIST_TOKEN || '';
 const GIST_FILE  = 'progress-calendar-data.json';
@@ -913,7 +862,7 @@ function setSyncStatus(state, text){
 
 async function gistPull(){
   try {
-    setSyncStatus('ing','Syncing…');
+    setSyncStatus('ing','Syncing...');
     const res = await fetch(GIST_API, {
       headers:{ 'Authorization':`token ${GIST_TOKEN}`, 'Accept':'application/vnd.github.v3+json' }
     });
@@ -922,7 +871,6 @@ async function gistPull(){
     const content = data.files[GIST_FILE]?.content || '{}';
     const remote = JSON.parse(content);
 
-    // Merge: remote wins for any key that exists, local fills the rest
     if(remote && typeof remote === 'object' && Object.keys(remote).length > 0){
       db = remote;
       if(!db.ratings)      db.ratings      = {};
@@ -933,6 +881,11 @@ async function gistPull(){
     }
     const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     setSyncStatus('ok', `✓ Synced ${now}`);
+    // Re-render after successful pull
+    buildFilterDropdown();
+    buildCalendar();
+    updateStats();
+    renderBadges();
   } catch(e) {
     setSyncStatus('err', '✗ Sync failed');
     console.error('Gist pull error:', e);
@@ -941,7 +894,7 @@ async function gistPull(){
 
 async function gistPush(){
   try {
-    setSyncStatus('ing','Saving…');
+    setSyncStatus('ing','Saving...');
     const res = await fetch(GIST_API, {
       method:'PATCH',
       headers:{
@@ -974,14 +927,13 @@ if(!db.dayTasks)     db.dayTasks     = {};
 if(!db.goals)        db.goals        = {};
 if(!db.defaultTasks) db.defaultTasks = [];
 
-// save = write local + debounced push to Gist
 const save = () => {
   localStorage.setItem('pcal5', JSON.stringify(db));
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(gistPush, 1500); // push 1.5s after last change
+  syncTimer = setTimeout(gistPush, 1500);
 };
 
-/* ─── HELPERS ─────────────────────────────────────────────────── */
+/* ─── HELPERS ──────────────────────────────────────────────────── */
 function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function goalKey(y,m){ return `${y}-${m}`; }
 function pad(n){ return String(n).padStart(2,'0'); }
@@ -994,7 +946,7 @@ function isEditable(date){ const t=getToday(),y=getYesterday(); return date.getT
 function uid(){ return Math.random().toString(36).slice(2,8); }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* ─── TABS ────────────────────────────────────────────────────── */
+/* ─── TABS ─────────────────────────────────────────────────────── */
 function switchTab(name){
   const names=['calendar','goals','defaults'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
@@ -1006,7 +958,7 @@ function switchTab(name){
   if(name==='calendar') { buildFilterDropdown(); buildCalendar(); updateStats(); renderBadges(); }
 }
 
-/* ─── YEAR ────────────────────────────────────────────────────── */
+/* ─── YEAR ──────────────────────────────────────────────────────── */
 let activeYear = 2026;
 function switchYear(y){
   activeYear = y;
@@ -1014,13 +966,13 @@ function switchYear(y){
   buildCalendar(); updateStats(); renderBadges();
 }
 
-/* ─── FILTER ──────────────────────────────────────────────────── */
-let activeFilter = ''; // defaultTask id or ''
+/* ─── FILTER ────────────────────────────────────────────────────── */
+let activeFilter = '';
 
 function buildFilterDropdown(){
   const sel = document.getElementById('taskFilterSelect');
   const prev = sel.value;
-  sel.innerHTML = '<option value="">🔍 Filter by task…</option>';
+  sel.innerHTML = '<option value="">🔍 Filter by task...</option>';
   db.defaultTasks.forEach(t=>{
     const opt = document.createElement('option');
     opt.value = t.id;
@@ -1053,17 +1005,48 @@ function clearFilter(){
   buildCalendar();
 }
 
-/* Check if a day has the filtered default task completed */
 function dayHasDefaultTaskDone(key, defaultTaskId){
   const tasks = db.dayTasks[key] || [];
   return tasks.some(t => t.defaultId === defaultTaskId && t.done);
 }
 
-/* ─── CALENDAR ────────────────────────────────────────────────── */
+/* ─── 21-DAY MILESTONE TRACKING ────────────────────────────────── */
+// Returns a Map of dateKey → milestone number (21, 42, 63...)
+function get21DayMilestones(){
+  const milestones = new Map();
+  const allKeys = Object.keys(db.ratings).sort();
+  if(allKeys.length === 0) return milestones;
+
+  const startDate = new Date(allKeys[0]);
+  startDate.setHours(0,0,0,0);
+  const endDate = getToday();
+
+  let streak = 0;
+  let cur = new Date(startDate);
+
+  while(cur <= endDate){
+    const key = dateKey(cur);
+    const r = db.ratings[key] || 0;
+    if(r >= STREAK_MIN){
+      streak++;
+      if(streak % 21 === 0){
+        milestones.set(key, streak); // store 21, 42, 63...
+      }
+    } else {
+      streak = 0;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  return milestones;
+}
+
+/* ─── CALENDAR ──────────────────────────────────────────────────── */
 function buildCalendar(){
   document.getElementById('cal-title').textContent = `${activeYear} Activity`;
   const outer = document.getElementById('heatmapOuter');
   outer.innerHTML = '';
+
+  const milestones = get21DayMilestones();
 
   const dowCol = document.createElement('div');
   dowCol.className = 'dow-col';
@@ -1108,9 +1091,13 @@ function buildCalendar(){
           const r     = db.ratings[key]||0;
           const edit  = isEditable(date);
           const isToday = date.getTime()===getToday().getTime();
-          const showBorder = isToday && r===0;
+          const milestoneNum = milestones.get(key) || 0; // 0 = not a milestone
+          const isMilestone = milestoneNum > 0;
 
-          let cls = `cell s${r}${edit?' clickable':' locked'}${showBorder?' today-cell':''}`;
+          // Today border only when unrated
+          let cls = `cell s${r}${edit?' clickable':' locked'}${isToday && r===0?' today-cell':''}`;
+
+          if(isMilestone) cls += ' milestone-21';
 
           // Apply filter styling
           if(activeFilter){
@@ -1123,9 +1110,17 @@ function buildCalendar(){
           cell.dataset.key  = key;
           cell.dataset.date = fmtDate(date);
           cell.dataset.edit = edit;
+          cell.dataset.milestoneNum = milestoneNum; // store 0, 21, 42, 63...
           cell.addEventListener('mousemove', e => showTip(e, cell));
           cell.addEventListener('mouseleave', hideTip);
           if(edit) cell.addEventListener('click', ()=> openModal(key, fmtDate(date)));
+          // Inject fire emoji INSIDE the milestone cell
+          if(isMilestone){
+            const fire = document.createElement('span');
+            fire.className = 'milestone-emoji';
+            fire.textContent = '🔥';
+            cell.appendChild(fire);
+          }
         }
         col.appendChild(cell);
       }
@@ -1136,7 +1131,46 @@ function buildCalendar(){
   }
 }
 
-/* ─── STATS ───────────────────────────────────────────────────── */
+/* ─── STREAK CALCULATION (FIXED) ────────────────────────────────── */
+// FIX: Streak is based on consecutive days ending at today OR yesterday.
+// If today has no rating yet, we check if yesterday starts a valid streak.
+// The streak count always reflects the best current chain.
+function calcCurrentStreak(){
+  const today = getToday();
+  const todayKey = dateKey(today);
+  const todayRating = db.ratings[todayKey] || 0;
+
+  // Start from today if today has a rating, else from yesterday
+  let startDate = new Date(today);
+  if(todayRating < STREAK_MIN){
+    // Today not rated yet — start from yesterday
+    startDate.setDate(startDate.getDate() - 1);
+    const yKey = dateKey(startDate);
+    if((db.ratings[yKey] || 0) < STREAK_MIN) return 0;
+  }
+
+  // Count backwards
+  let s = 0;
+  let d = new Date(startDate);
+  while(true){
+    const r = db.ratings[dateKey(d)] || 0;
+    if(r >= STREAK_MIN){ s++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return s;
+}
+
+function calcMaxStreak(){
+  const total=isLeap(activeYear)?366:365;
+  let max=0,cur=0;
+  for(let d=0;d<total;d++){
+    const r=db.ratings[dateKey(new Date(activeYear,0,d+1))]||0;
+    r>=STREAK_MIN?(cur++,max=Math.max(max,cur)):(cur=0);
+  }
+  return max;
+}
+
+/* ─── STATS ─────────────────────────────────────────────────────── */
 function updateStats(){
   const total = isLeap(activeYear)?366:365;
   let active=0,fives=0,sum=0,count=0;
@@ -1148,47 +1182,39 @@ function updateStats(){
   }
   const streak=calcCurrentStreak(), maxS=calcMaxStreak();
   const bestMon=byMonth.indexOf(Math.max(...byMonth));
-  document.getElementById('sc-active').textContent  = active;
+
+  // Stats strip
   document.getElementById('sc-streak').textContent  = streak;
+  document.getElementById('sc-active').textContent  = active;
   document.getElementById('sc-month').textContent   = active>0?MONTHS[bestMon]:'—';
   document.getElementById('sc-five').textContent    = fives;
+
+  // Sidebar — streak first
+  document.getElementById('sb-streak').textContent  = streak>0?`${streak} 🔥`:'0';
   document.getElementById('sb-total').textContent   = active;
-  document.getElementById('sb-streak').textContent  = maxS>0?`${maxS} 🔥`:'0';
+  document.getElementById('sb-maxstreak').textContent = maxS>0?`${maxS} 🔥`:'0';
   document.getElementById('sb-avg').textContent     = count>0?(sum/count).toFixed(1):'—';
   document.getElementById('sb-five').textContent    = fives;
-  // Update streak badge under name
+
+  // Streak badge under name
   const streakEl = document.getElementById('p-streak-display');
   streakEl.textContent = `🔥 ${streak} Streak`;
   streakEl.className = 'p-streak' + (streak >= 7 ? ' hot' : '');
-  // Update mobile streak too
+
   const mobileStreakEl = document.getElementById('mobile-streak-display');
   if(mobileStreakEl) { mobileStreakEl.textContent = `🔥 ${streak} Streak`; }
+
   const streakTxt = streak>0?`${streak} day 🔥 streak`:'No streak yet';
   document.getElementById('cal-sub').textContent = `${active} day${active!==1?'s':''} logged · ${streakTxt}`;
 }
-function calcCurrentStreak(){
-  let s=0,d=getToday();
-  while(true){ const r=db.ratings[dateKey(d)]||0; if(r>=STREAK_MIN){s++;d.setDate(d.getDate()-1);}else break; }
-  return s;
-}
-function calcMaxStreak(){
-  const total=isLeap(activeYear)?366:365;
-  let max=0,cur=0;
-  for(let d=0;d<total;d++){
-    const r=db.ratings[dateKey(new Date(activeYear,0,d+1))]||0;
-    r>=STREAK_MIN?(cur++,max=Math.max(max,cur)):(cur=0);
-  }
-  return max;
-}
 
-/* ─── DEFAULT TASKS MANAGEMENT ────────────────────────────────── */
+/* ─── DEFAULT TASKS ─────────────────────────────────────────────── */
 function renderDefaultTasks(){
   const list  = document.getElementById('defaultTaskList');
   const empty = document.getElementById('defaults-empty');
   const badge = document.getElementById('defaults-count-badge');
   badge.textContent = `${db.defaultTasks.length} task${db.defaultTasks.length!==1?'s':''}`;
 
-  // Remove all task items (keep empty placeholder)
   Array.from(list.children).forEach(c=>{ if(c.id!=='defaults-empty') c.remove(); });
 
   if(db.defaultTasks.length===0){
@@ -1227,7 +1253,6 @@ function addDefaultTask(){
 
 function deleteDefaultTask(id){
   db.defaultTasks = db.defaultTasks.filter(t=>t.id!==id);
-  // Also remove from all day tasks
   Object.keys(db.dayTasks).forEach(key=>{
     db.dayTasks[key] = db.dayTasks[key].filter(t=>t.defaultId!==id);
   });
@@ -1237,18 +1262,14 @@ function deleteDefaultTask(id){
   buildFilterDropdown();
 }
 
-/* ─── DAY MODAL ───────────────────────────────────────────────── */
+/* ─── DAY MODAL ─────────────────────────────────────────────────── */
 let pendingKey=null, pendingRating=0, pendingTasks=[];
 
 function openModal(key, dateStr){
   pendingKey = key;
   pendingRating = db.ratings[key]||0;
 
-  // Merge existing tasks with defaults
-  // Start with existing tasks for this day
   const existing = db.dayTasks[key] ? JSON.parse(JSON.stringify(db.dayTasks[key])) : [];
-
-  // For each default task, if not already in existing tasks, inject it
   const defaults = db.defaultTasks;
   const merged = [...existing];
 
@@ -1265,7 +1286,6 @@ function openModal(key, dateStr){
   renderStars(pendingRating);
   renderModalTasks();
 
-  // Show defaults hint if we have any
   const hint = document.getElementById('m-default-hint');
   hint.style.display = defaults.length > 0 ? 'inline-flex' : 'none';
 
@@ -1320,8 +1340,6 @@ function deleteModalTask(id){
 
 document.getElementById('btn-save').addEventListener('click',()=>{
   const hasTick = pendingTasks.some(t => t.done);
-
-  // Clear previous errors
   document.getElementById('m-val-rating').style.display = 'none';
   document.getElementById('m-val-task').style.display   = 'none';
 
@@ -1355,14 +1373,16 @@ function closeModal(){
   document.getElementById('m-val-task').style.display='none';
 }
 
-/* ─── TOOLTIP ─────────────────────────────────────────────────── */
+/* ─── TOOLTIP ───────────────────────────────────────────────────── */
 const tip = document.getElementById('tooltip');
 function showTip(e,cell){
   const key = cell.dataset.key;
   const r   = db.ratings[key]||0;
   const tasks = (db.dayTasks[key]||[]);
   const lock  = cell.dataset.edit==='true'?'':'  🔒';
-  let html = `<strong>${cell.dataset.date}</strong>${lock}<br/>`;
+  const mNum  = parseInt(cell.dataset.milestoneNum||'0');
+  const mile  = mNum > 0 ? ` 🔥 ${mNum}-day milestone!` : '';
+  let html = `<strong>${cell.dataset.date}</strong>${lock}${mile}<br/>`;
   html += r>0 ? '⭐'.repeat(r) : 'No rating';
   if(tasks.length){
     html += '<br/>────────────<br/>';
@@ -1377,7 +1397,7 @@ document.addEventListener('mousemove',e=>{
   tip.style.top =(e.clientY-36)+'px';
 });
 
-/* ─── GOALS PAGE ──────────────────────────────────────────────── */
+/* ─── GOALS PAGE ────────────────────────────────────────────────── */
 function renderGoals(){
   const y    = +document.getElementById('goalsYearSelect').value;
   const grid = document.getElementById('goalsGrid');
@@ -1441,7 +1461,7 @@ function renderGoals(){
     const addRowHtml = `
       <div class="add-task-row${isLocked?' locked-row':''}" style="margin-top:6px;">
         <input class="add-task-input" id="gti-${key}"
-          placeholder="${isLocked?'🔒 Locked':'Add a task…'}"
+          placeholder="${isLocked?'🔒 Locked':'Add a task...'}"
           ${isLocked?'disabled':''}
           onkeydown="if(event.key==='Enter')addGoalTask('${key}')"/>
         <button class="add-task-btn" ${isLocked?'disabled':''} onclick="addGoalTask('${key}')">+</button>
@@ -1450,7 +1470,7 @@ function renderGoals(){
 
     const goalTextHtml = `
       <textarea class="goal-input"
-        placeholder="${isLocked?'🔒 Locked':'Set your goal for '+MONTHS[m]+'…'}"
+        placeholder="${isLocked?'🔒 Locked':'Set your goal for '+MONTHS[m]+'...'}"
         rows="2"
         ${isLocked?'disabled':''}
         onblur="saveGoalText('${key}',this.value)">${escHtml(data.text)}</textarea>
@@ -1524,9 +1544,8 @@ function toggleGoalDone(key){
   save(); renderGoals(); renderBadges();
 }
 
-/* ─── BADGES ──────────────────────────────────────────────────── */
+/* ─── BADGES ────────────────────────────────────────────────────── */
 function getMonthStreakPct(y, m){
-  // % of days so far this month that have 3+ stars (streak-quality days)
   const today      = getToday();
   const total      = daysInMonth(y, m);
   const isCurrentM = (y===today.getFullYear() && m===today.getMonth());
@@ -1655,20 +1674,17 @@ function renderBadges(){
       : `Rate every day + finish tasks to earn badges · This month streak quality: ${curPct}%`;
 }
 
-/* ─── BOOT ──────────────────────────────────────────────────────  */
+/* ─── BOOT ──────────────────────────────────────────────────────── */
 async function boot(){
-  // Render immediately from localStorage (no flicker)
+  // Render immediately from localStorage
   buildFilterDropdown();
   buildCalendar();
   updateStats();
   renderBadges();
 
-  // Then pull latest from Gist and re-render if data changed
+  // Then pull latest from Gist and re-render
   await gistPull();
-  buildFilterDropdown();
-  buildCalendar();
-  updateStats();
-  renderBadges();
+  // gistPull now re-renders internally after successful pull
 }
 boot();
 </script>
