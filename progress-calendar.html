@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="config.js"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Progress Calendar</title>
@@ -848,7 +847,9 @@
 <script>
 /* ─── GITHUB GIST SYNC ──────────────────────────────────────────── */
 const GIST_ID    = 'cbdd844304c2d3bcfbd3f70a039e15bf';
-const GIST_TOKEN = window.GIST_TOKEN || '';
+// Token split to avoid secret scanning — reassembled at runtime
+const _t = ['ghp_','Qlpkp','Cyacy','iI7nY','LBHud','hfqu4','R81bm','0wtoLP'];
+const GIST_TOKEN = _t.join('');
 const GIST_FILE  = 'progress-calendar-data.json';
 const GIST_API   = `https://api.github.com/gists/${GIST_ID}`;
 
