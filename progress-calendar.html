@@ -93,6 +93,21 @@
   .filter-select option{background:var(--card);}
   .filter-active{border-color:var(--green) !important;color:var(--green);}
 
+  /* ── SHOW-ALL TOGGLE ── */
+  .toggle-wrap{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 10px;background:var(--card);border:1px solid var(--borderL);border-radius:20px;cursor:pointer;user-select:none;transition:all .2s;white-space:nowrap;}
+  .toggle-wrap:hover{border-color:var(--accent);}
+  .toggle-wrap.on{border-color:var(--green);box-shadow:0 0 14px rgba(57,211,83,.28);}
+  .toggle-icon{font-size:16px;display:inline-block;filter:drop-shadow(0 0 5px rgba(240,136,62,.8));animation:iconFloat 2.2s ease-in-out infinite;}
+  .toggle-wrap.on .toggle-icon{filter:drop-shadow(0 0 6px rgba(57,211,83,.9));animation:iconSpin 3s linear infinite;}
+  @keyframes iconFloat{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-2px) scale(1.15);}}
+  @keyframes iconSpin{0%{transform:rotate(0deg) scale(1.15);}100%{transform:rotate(360deg) scale(1.15);}}
+  .toggle-label{font-size:12px;font-weight:600;color:var(--t2);}
+  .toggle-wrap.on .toggle-label{color:var(--green);}
+  .switch{position:relative;width:34px;height:18px;border-radius:10px;background:var(--s0);border:1px solid var(--borderL);transition:all .25s;flex-shrink:0;}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--t3);transition:all .25s;}
+  .toggle-wrap.on .switch{background:linear-gradient(135deg,#1f8c3b,#39d353);border-color:var(--green);}
+  .toggle-wrap.on .switch::after{left:18px;background:#fff;box-shadow:0 0 6px rgba(57,211,83,.8);}
+
   .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
   .stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
   .sc-icon{font-size:16px;margin-bottom:3px;}
@@ -449,7 +464,7 @@
     .sc-val{font-size:20px;}
     .sc-lbl{font-size:9px;}
     .header-row{flex-direction:column;align-items:flex-start;gap:8px;}
-    .header-controls{width:100%;display:flex;justify-content:space-between;gap:6px;}
+    .header-controls{width:100%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;}
     .filter-select{flex:1;max-width:none;font-size:12px;padding:6px 24px 6px 10px;}
     .year-select{font-size:12px;padding:6px 24px 6px 10px;}
     .page-title{font-size:17px;}
@@ -509,7 +524,7 @@
   <div class="titlebar">
     <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
     <span class="win-title">Progress Calendar</span>
-    <div id="sync-status" class="sync-status sync-idle">
+    <div id="sync-status" class="sync-status sync-idle" onclick="askToken()" title="Click to set / change GitHub token" style="cursor:pointer;">
       <span class="sync-dot"></span>
       <span class="sync-txt">Connecting...</span>
     </div>
@@ -570,7 +585,7 @@
         <hr class="divider"/>
         <div style="font-size:11px;color:var(--t3);line-height:1.6;">
           🔒 Only <strong style="color:var(--t2)">today</strong> & <strong style="color:var(--t2)">yesterday</strong> are editable.<br/>
-          🔥 Streak counts with <strong style="color:var(--t2)">3+ stars</strong> only.<br/>
+          🔥 Streak counts with <strong style="color:var(--t2)">any star (1+)</strong>.<br/>
           📅 <strong style="color:var(--deadline)">Purple glow</strong> = deadline on that day.
         </div>
       </aside>
@@ -588,6 +603,11 @@
         <div class="header-row">
           <div class="page-title">📊 Progress Heatmap</div>
           <div class="header-controls">
+            <div class="toggle-wrap" id="showAllToggle" onclick="toggleShowAll()" title="ON = show all active days · OFF = current streak only">
+              <span class="toggle-icon" id="toggleIcon">🔥</span>
+              <span class="toggle-label" id="toggleLabel">Streak only</span>
+              <span class="switch"></span>
+            </div>
             <div class="filter-wrap">
               <select class="filter-select" id="taskFilterSelect" onchange="applyFilter()">
                 <option value="">🔍 Filter by task...</option>
@@ -774,7 +794,7 @@
     <div class="m-date" id="m-date"></div>
     <div class="m-title">Rate your day ✨</div>
     <div class="m-hint">How productive were you today?</div>
-    <div class="m-streak-note">⚡ 3+ stars keeps your 🔥 streak alive!</div>
+    <div class="m-streak-note">⚡ Any star rating keeps your 🔥 streak alive!</div>
     <div class="stars-row">
       <button class="star-btn" data-i="1">⭐</button>
       <button class="star-btn" data-i="2">⭐</button>
@@ -806,8 +826,16 @@
 <script>
 /* ─── GITHUB GIST SYNC ──────────────────────────────────────────── */
 const GIST_ID   = 'cbdd844304c2d3bcfbd3f70a039e15bf';
-const _t = ['ghp_','Ga15T','NYZOH','F8JNR','Z6Jd6','AxJlw','cbIQF','1JduU4'];
-const GIST_TOKEN = _t.join('');
+// Token is NOT stored in the code. It is asked once and saved in this browser only.
+let GIST_TOKEN = localStorage.getItem('pcal_gist_token') || '';
+function askToken(){
+  const t = prompt('Paste your GitHub token (gist permission only):');
+  if(t && t.trim()){
+    GIST_TOKEN = t.trim();
+    localStorage.setItem('pcal_gist_token', GIST_TOKEN);
+    gistPull();
+  }
+}
 const GIST_FILE  = 'progress-calendar-data.json';
 const GIST_API   = `https://api.github.com/gists/${GIST_ID}`;
 let syncTimer = null;
@@ -819,6 +847,7 @@ function setSyncStatus(state, text){
 }
 
 async function gistPull(){
+  if(!GIST_TOKEN){ setSyncStatus('idle','Tap to add token'); return; }
   try {
     setSyncStatus('ing','Syncing...');
     const res = await fetch(GIST_API, {
@@ -847,6 +876,7 @@ async function gistPull(){
 }
 
 async function gistPush(){
+  if(!GIST_TOKEN){ setSyncStatus('idle','Tap to add token'); return; }
   try {
     setSyncStatus('ing','Saving...');
     const res = await fetch(GIST_API, {
@@ -867,7 +897,7 @@ async function gistPush(){
 const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MFULL   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const STREAK_MIN = 3;
+const STREAK_MIN = 1; // any star (1+) keeps the streak alive
 
 /* ─── EMOJI OPTIONS FOR DEADLINES ──────────────────────────────── */
 const DEADLINE_EMOJIS = [
@@ -988,6 +1018,38 @@ function dayHasDefaultTaskDone(key, defaultTaskId){
   return tasks.some(t => t.defaultId === defaultTaskId && t.done);
 }
 
+/* ─── SHOW ALL / STREAK ONLY TOGGLE ─────────────────────────────── */
+let showAllDays = localStorage.getItem('pcal_showAll') === '1';
+const GRACE_MISSED = 2; // current streak stays visible for 2 missed days, hides on the 3rd
+
+function getVisibleStreakKeys(){
+  const set = new Set();
+  const d = getToday();
+  let found = false;
+  // look back today, yesterday, day before (2 missed days allowed)
+  for(let i=0; i<=GRACE_MISSED; i++){
+    if((db.ratings[dateKey(d)]||0) >= STREAK_MIN){ found = true; break; }
+    d.setDate(d.getDate()-1);
+  }
+  if(!found) return set; // streak broken -> nothing visible
+  while((db.ratings[dateKey(d)]||0) >= STREAK_MIN){
+    set.add(dateKey(d));
+    d.setDate(d.getDate()-1);
+  }
+  return set;
+}
+function updateToggleUI(){
+  document.getElementById('showAllToggle').classList.toggle('on', showAllDays);
+  document.getElementById('toggleIcon').textContent  = showAllDays ? '🌟' : '🔥';
+  document.getElementById('toggleLabel').textContent = showAllDays ? 'All active days' : 'Streak only';
+}
+function toggleShowAll(){
+  showAllDays = !showAllDays;
+  localStorage.setItem('pcal_showAll', showAllDays ? '1' : '0');
+  updateToggleUI();
+  buildCalendar();
+}
+
 /* ─── 21-DAY MILESTONES ─────────────────────────────────────────── */
 function get21DayMilestones(){
   const milestones = new Map();
@@ -1014,6 +1076,7 @@ function buildCalendar(){
   outer.innerHTML = '';
   const milestones = get21DayMilestones();
   const todayKey   = dateKey(getToday());
+  const visibleSet = showAllDays ? null : getVisibleStreakKeys();
 
   const dowCol = document.createElement('div');
   dowCol.className = 'dow-col';
@@ -1051,11 +1114,14 @@ function buildCalendar(){
         } else {
           const date  = new Date(activeYear,m,day);
           const key   = dateKey(date);
-          const r     = db.ratings[key]||0;
           const edit  = isEditable(date);
+          const realR = db.ratings[key]||0;
+          // hide old (non-streak) active days when toggle is OFF; today & yesterday always show
+          const hidden = !!visibleSet && realR>0 && !visibleSet.has(key) && !edit;
+          const r     = hidden ? 0 : realR;
           const isToday = key === todayKey;
           const milestoneNum = milestones.get(key) || 0;
-          const isMilestone  = milestoneNum > 0;
+          const isMilestone  = milestoneNum > 0 && !hidden;
 
           // Deadline check
           const deadlines = getDeadlineForKey(key);
@@ -1068,7 +1134,7 @@ function buildCalendar(){
           if(isMilestone) cls += ' milestone-21';
           if(hasDeadline) cls += ' deadline-cell' + (dlPast?' deadline-past':dlSoon?' deadline-soon':'');
           if(activeFilter){
-            const hit = dayHasDefaultTaskDone(key, activeFilter);
+            const hit = !hidden && dayHasDefaultTaskDone(key, activeFilter);
             cls += hit ? ' filter-hit' : ' filter-dim';
           }
 
@@ -1076,7 +1142,8 @@ function buildCalendar(){
           cell.dataset.key         = key;
           cell.dataset.date        = fmtDate(date);
           cell.dataset.edit        = edit;
-          cell.dataset.milestoneNum = milestoneNum;
+          cell.dataset.hidden      = hidden ? 'true' : 'false';
+          cell.dataset.milestoneNum = isMilestone ? milestoneNum : 0;
           cell.dataset.deadlines   = JSON.stringify(deadlines);
 
           cell.addEventListener('mousemove', e => showTip(e, cell));
@@ -1091,7 +1158,7 @@ function buildCalendar(){
             cell.appendChild(fire);
           }
 
-          // Deadline emoji overlay (top-right corner)
+          // Deadline emoji overlay
           if(hasDeadline){
             const dlEmoji = document.createElement('span');
             dlEmoji.className = 'deadline-emoji';
@@ -1416,8 +1483,9 @@ function closeModal(){
 const tip = document.getElementById('tooltip');
 function showTip(e,cell){
   const key   = cell.dataset.key;
-  const r     = db.ratings[key]||0;
-  const tasks = db.dayTasks[key]||[];
+  const hid   = cell.dataset.hidden==='true';
+  const r     = hid ? 0 : (db.ratings[key]||0);
+  const tasks = hid ? [] : (db.dayTasks[key]||[]);
   const lock  = cell.dataset.edit==='true'?'':'  🔒';
   const mNum  = parseInt(cell.dataset.milestoneNum||'0');
   const mile  = mNum>0 ? ` 🔥 ${mNum}-day milestone!` : '';
@@ -1575,12 +1643,14 @@ function renderBadges(){
 
 /* ─── BOOT ──────────────────────────────────────────────────────── */
 async function boot(){
+  updateToggleUI();
   buildEmojiPicker();
   buildFilterDropdown();
   buildCalendar();
   updateStats();
   renderBadges();
-  await gistPull();
+  if(!GIST_TOKEN){ setSyncStatus('idle','Tap to add token'); setTimeout(askToken, 400); }
+  else await gistPull();
 }
 boot();
 </script>
