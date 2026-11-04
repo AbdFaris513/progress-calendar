@@ -119,6 +119,8 @@
   .cal-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;overflow:visible;}
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .cal-title{font-size:14px;font-weight:700;}
+  .cal-title-wrap{display:flex;align-items:center;gap:8px;}
+  .cal-title-wrap .year-select{font-size:14px;font-weight:700;padding:4px 28px 4px 12px;}
   .cal-sub{font-size:12px;color:var(--t2);}
   .filter-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(57,211,83,.1);border:1px solid rgba(57,211,83,.3);font-size:11px;color:var(--green);font-weight:600;margin-left:8px;}
   .filter-badge-x{cursor:pointer;font-size:12px;color:var(--green);margin-left:2px;}
@@ -615,15 +617,6 @@
               </select>
               <span class="dropdown-arrow">▾</span>
             </div>
-            <div class="year-dropdown-wrap">
-              <select class="year-select" id="yearSelect" onchange="switchYear(+this.value)">
-                <option value="2023">2023</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026" selected>2026</option>
-              </select>
-              <span class="dropdown-arrow">▾</span>
-            </div>
           </div>
         </div>
 
@@ -673,7 +666,13 @@
 
         <div class="cal-card">
           <div class="cal-header">
-            <span class="cal-title" id="cal-title">2026 Activity</span>
+            <div class="cal-title-wrap">
+              <div class="year-dropdown-wrap">
+                <select class="year-select" id="yearSelect" onchange="switchYear(+this.value)"></select>
+                <span class="dropdown-arrow">▾</span>
+              </div>
+              <span class="cal-title" id="cal-title">Activity</span>
+            </div>
             <span class="cal-sub" id="cal-sub">Click today or yesterday to rate ✨</span>
           </div>
           <div class="heatmap-outer" id="heatmapOuter"></div>
@@ -869,7 +868,7 @@ async function gistPull(){
     }
     const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     setSyncStatus('ok', `✓ Synced ${now}`);
-    buildFilterDropdown(); buildCalendar(); updateStats(); renderBadges(); renderDeadlines();
+    buildYearOptions(); buildFilterDropdown(); buildCalendar(); updateStats(); renderBadges(); renderDeadlines();
   } catch(e) {
     setSyncStatus('err', '✗ Sync failed');
     console.error('Gist pull error:', e);
@@ -972,7 +971,25 @@ function switchTab(name){
 }
 
 /* ─── YEAR ──────────────────────────────────────────────────────── */
-let activeYear = 2026;
+let activeYear = new Date().getFullYear();
+// Year list = first year that has data  ->  current year
+function buildYearOptions(){
+  const cur = new Date().getFullYear();
+  let first = cur;
+  Object.keys(db.ratings).forEach(k=>{ const y = parseInt(k.slice(0,4),10); if(y && y < first) first = y; });
+  const fill = (sel, keep) => {
+    sel.innerHTML = '';
+    for(let y=first; y<=cur; y++){
+      const o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o);
+    }
+    sel.value = (keep>=first && keep<=cur) ? keep : cur;
+  };
+  const ySel = document.getElementById('yearSelect');
+  fill(ySel, activeYear);
+  activeYear = +ySel.value;
+  const gSel = document.getElementById('goalsYearSelect');
+  fill(gSel, +gSel.value);
+}
 function switchYear(y){
   activeYear = y;
   document.getElementById('yearSelect').value = y;
@@ -1072,7 +1089,7 @@ function get21DayMilestones(){
 
 /* ─── CALENDAR BUILD ────────────────────────────────────────────── */
 function buildCalendar(){
-  document.getElementById('cal-title').textContent = `${activeYear} Activity`;
+  document.getElementById('cal-title').textContent = 'Activity';
   const outer = document.getElementById('heatmapOuter');
   outer.innerHTML = '';
   const milestones = get21DayMilestones();
@@ -1645,6 +1662,7 @@ function renderBadges(){
 /* ─── BOOT ──────────────────────────────────────────────────────── */
 async function boot(){
   updateToggleUI();
+  buildYearOptions();
   buildEmojiPicker();
   buildFilterDropdown();
   buildCalendar();
